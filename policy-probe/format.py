@@ -5,6 +5,32 @@ from rich.console import Console
 
 console = Console()
 
+def header() -> None:
+    console.print(
+        """
+      [red]░▒▒▒▒                   
+     ░▒▒▒▒░ ░░░               
+      ▒▒▒▒▒▒▒[/red][white]▓[red]▒               
+        ▒▒[/red]▓██▓▒▓▒▒▒           
+     [yellow1]░ [white]▒▒▒▓█▓▓████░           
+[yellow1]▒▒▒▓▒▓  [white]▒▒▒▓███▓▒        [yellow1]▒    
+    [yellow1]▒▓▒   [white]▒ ▓█▓        [yellow1]░▓▒░░  
+     [yellow1]▒▓▒    ░▒▒▒▒      ░▓▒▓▒░▓
+       [yellow1]▒▓▓▒▓████▓▓▓▒▒░▒▓░▒     
+            [yellow1]▒████▓░▒▒                                    
+            [yellow1]▒▓██▓█▓▒                              [green]██████   ████   ████    ████
+             [yellow1]▒▓█▓▓█░     [white] ████   ███    ███ ███     [green]██    ██  ██  ██ ██  ██ ██
+           [yellow1]▒▒███▓▓▓▓▒    [white]██     ██ ██  ██ ███ ██    [green]██    ██  ██  ██  ████  ██
+           [yellow1]▒▓██▓▓▓██░    [white] ███   █████  ██  █  ██    [green]██    ██████  ██   ██   ██
+         [yellow1]▓▓▒▓▓▓▓▒▓▓░     [white]   ██  ██ ██  ██     ██    [green]██    ██  ██  ██        ██
+          [white]▒▓▒  ▓░▒  [white]     ████   ██ ██  ██     ██    [green]██    ██  ██  ██        ██
+       [white]▒▓█▓█    ▓▓▒                               [green]██████  ██  ██  ██        ██
+                  [white]▒▒▓▓
+        """,
+        highlight=False
+    )
+
+
 
 class Format:
     BORDER_FORMAT = "[cyan]║[/cyan] {}"

@@ -2,7 +2,7 @@ import botocore.exceptions
 from botocore.client import BaseClient
 import args as argsmod
 import awsaccount
-from format import Format
+from format import Format, header
 
 all_groups = []
 
@@ -16,7 +16,13 @@ def handle_client_error(func):
         try:
             return func(*args, **kwargs)
         except botocore.exceptions.ClientError as e:
-            Format.print_error(e.response["Error"]["Code"])
+            response_code = e.response['Error']['Code']
+            if response_code == 'AccessDenied' or response_code == 'MethodNotAllowed':
+                Format.print_error(' Access Denied')
+            else:
+                Format.print_error('\n' + e.response['Error']['Message'])
+        except KeyboardInterrupt:
+            pass
 
     return wrapper
 
@@ -220,6 +226,7 @@ def main():
 
 
 if __name__ == "__main__":
+    header()
     args = argsmod.parse_args()
     Format = Format(border=args.no_border)
     main()
