@@ -19,8 +19,8 @@ def handle_client_error(func):
             response_code = e.response['Error']['Code']
             if response_code == 'AccessDenied' or response_code == 'MethodNotAllowed':
                 Format.print_error(' Access Denied')
-            elif response_code == 'InvalidClientTokenId':
-                Format.print_error(' Invalid Client Token ID - Session token it most likely expired or invalid.')
+            elif response_code == 'ExpiredToken' or response_code == 'InvalidClientTokenId':
+                Format.print_error(f' {response_code}: {e.response['Error']['Message']}')
                 exit(1)
             else:
                 Format.print_error(f'\n{response_code}: {e.response['Error']['Message']}')
