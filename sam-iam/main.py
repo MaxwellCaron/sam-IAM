@@ -19,8 +19,11 @@ def handle_client_error(func):
             response_code = e.response['Error']['Code']
             if response_code == 'AccessDenied' or response_code == 'MethodNotAllowed':
                 Format.print_error(' Access Denied')
+            elif response_code == 'InvalidClientTokenId':
+                Format.print_error(' Invalid Client Token ID - Session token it most likely expired or invalid.')
+                exit(1)
             else:
-                Format.print_error('\n' + e.response['Error']['Message'])
+                Format.print_error(f'\n{response_code}: {e.response['Error']['Message']}')
         except KeyboardInterrupt:
             pass
 
@@ -126,14 +129,15 @@ def enum_groups_for_user(client: BaseClient, username: str):
     resp = client.list_groups_for_user(UserName=username)
     groups = resp["Groups"]
 
-    if groups:
-        for group in groups:
-            group_name = group["GroupName"]
-            all_groups.append(group_name)
-            Format.print_title1(f'{group_name} ({group["Arn"]})')
-            get_attached_policies(client, "group", group_name)
-
-            get_inline_policies(client, "group", group_name)
+    if not groups:
+        return
+        
+    for group in groups:
+        group_name = group["GroupName"]
+        all_groups.append(group_name)
+        Format.print_title1(f'{group_name} ({group["Arn"]})')
+        get_attached_policies(client, "group", group_name)
+        get_inline_policies(client, "group", group_name)
 
 
 @handle_client_error
@@ -145,11 +149,12 @@ def enum_group_policies(client: BaseClient):
 
     for group in groups:
         group_name = group["GroupName"]
-        if group_name not in all_groups:
-            Format.print_title1(f'{group_name} ({group["Arn"]})')
-            get_attached_policies(client, "group", group_name)
+        if group_name in all_groups:
+            continue
 
-            get_inline_policies(client, "group", group_name)
+        Format.print_title1(f'{group_name} ({group["Arn"]})')
+        get_attached_policies(client, "group", group_name)
+        get_inline_policies(client, "group", group_name)
 
 
 @handle_client_error
@@ -167,22 +172,34 @@ def get_group_policy(client: BaseClient, group_name: str, policy_name: str):
 # ---------------) Roles (----------------#
 ###########################################
 
-@handle_client_error
-def enum_role_policies(client: BaseClient):
+def enum_role_policies(client: BaseClient, account: awsaccount.AWSAccount):
     Format.print_title("Roles")
+    roles = []
 
-    resp = client.list_roles()
-    roles = resp["Roles"]
+    if account.assumed:
+        roles.append({"RoleName": account.name})
+
+    try:
+        resp = client.list_roles()
+        roles.append(resp["Roles"])
+    except botocore.exceptions.ClientError as e:
+        response_code = e.response['Error']['Code']
+        if response_code == 'AccessDenied' or response_code == 'MethodNotAllowed':
+            Format.print_error(' Access Denied - Cannot list roles directly.')
+        else:
+            Format.print_error(f'\n{response_code}: {e.response['Error']['Message']}')
 
     for role in roles:
         role_name = role["RoleName"]
-        if "AWSServiceRoleFor" not in role_name:
-            Format.print_title1(role_name)
-            Format.print_title3("Get-Role")
-            Format.print_data(role)
+        if "AWSServiceRoleFor" in role_name:
+            continue
 
-            get_attached_policies(client, "role", role_name)
-            get_inline_policies(client, "role", role_name)
+        Format.print_title1(role_name)
+        Format.print_title3("Get-Role")
+        Format.print_data(role)
+
+        get_attached_policies(client, "role", role_name)
+        get_inline_policies(client, "role", role_name)
 
 
 @handle_client_error
@@ -206,8 +223,7 @@ def enum(account: awsaccount.AWSAccount):
     enum_user_policies(client, username)
     enum_groups_for_user(client, username)
     enum_group_policies(client)
-    enum_role_policies(client)
-
+    enum_role_policies(client, account)
 
 def main():
     try:

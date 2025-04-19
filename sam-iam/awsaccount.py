@@ -37,7 +37,7 @@ def get_account_from_profile(profile):
         return AWSAccount(access_key, secret_key, session_token, region)
 
     except ProfileNotFound:
-        raise AccountError("Profile '{}' cannot be found".format(profile))
+        raise AccountError(f"Profile '{profile}' cannot be found")
 
 
 class AccountError(Exception):
@@ -51,6 +51,7 @@ class AWSAccount:
         self.secret_key = secret_key
         self.session_token = session_token
         self.region = region
+        self.assumed = False
         self.session = self._create_session()
         self.name = self._get_name()
 
@@ -67,6 +68,12 @@ class AWSAccount:
         try:
             response = self.session.client("sts").get_caller_identity()
             arn = response["Arn"]
-            return arn.split("/")[-1]
+            arn_split = arn.split("/")
+
+            if 'assumed-role' in arn:
+                self.assumed = True
+                return arn_split[-2]
+            return arn_split[-1]
+        
         except ClientError:
             return "Unknown"
